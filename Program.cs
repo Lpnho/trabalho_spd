@@ -1,0 +1,16 @@
+﻿using Eto.Forms;
+using Freeway.Implementation.Sockets;
+using Freeway.Singleton;
+using Freeway.Ui;
+
+namespace Freeway;
+
+public class Program
+{
+    [STAThread]
+    public static void Main(string[] args)
+    {
+        new NetworkProvinderSingleton(new SocketNetworkProvinder());
+        new Application(new Eto.GtkSharp.Platform()).Run(new MainWindow());
+    }
+}
