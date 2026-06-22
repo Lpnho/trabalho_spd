@@ -3,7 +3,7 @@ using Freeway.Models.Actions;
 
 namespace Freeway.Core;
 
-internal readonly struct GameMessage
+public readonly struct GameMessage
 {
     public byte Value { get; }
 
@@ -66,6 +66,11 @@ internal readonly struct GameMessage
         return new(type, playerId, action);
     }
 
+    public static GameMessage CreateConnectResponse(
+        byte playerId)
+    {
+        return new(MessageType.Connect, playerId, 0);
+    }
     public static implicit operator byte(GameMessage msg)
         => msg.Value;
 

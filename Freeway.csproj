@@ -14,13 +14,19 @@
 	</ItemGroup>
 
 	<ItemGroup>
-	  <Folder Include="Assets\" />
-	</ItemGroup>
-
-	<ItemGroup>
+	  <None Update="Assets\car.png">
+	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+	  </None>
+	  <None Update="Assets\player.png">
+	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+	  </None>
 	  <None Update="Assets\scene.png">
 	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
 	  </None>
+	</ItemGroup>
+
+	<ItemGroup>
+	  <Folder Include="Implementation\Grpc\" />
 	</ItemGroup>
 
 </Project>

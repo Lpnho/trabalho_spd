@@ -2,7 +2,7 @@
 
 namespace Freeway.Interfaces;
 
-internal interface INavigationContext
+public interface INavigationContext
 {
     public void NavigateTo(Control control);
     public void NavigatePop();

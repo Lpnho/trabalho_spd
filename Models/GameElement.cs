@@ -1,7 +1,7 @@
 ﻿namespace Freeway.Models;
 
 
-internal readonly struct GameElement
+public readonly struct GameElement
 {
     public byte Value { get; }
 

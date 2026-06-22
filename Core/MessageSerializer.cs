@@ -1,10 +1,12 @@
-﻿using Freeway.Models;
+﻿using Atk;
+using Freeway.Models;
 using Freeway.Models.Network;
+using Freeway.Singleton;
 using System.Net;
 
 namespace Freeway.Core;
 
-internal class MessageSerializer
+public class MessageSerializer
 {
     public static byte[] Serialize(byte action)
     {
@@ -13,91 +15,57 @@ internal class MessageSerializer
         return buffer;
     }
 
-    public static byte[] Serialize(GameStateMatrix state)
+    public static byte[] Serialize(Packet gameState)
     {
-        byte[] payload = state.ToByteArray();
-        int payloadSize = payload.Length;
-
-        byte[] data = new byte[
-            sizeof(byte) +
-            sizeof(int) +
-            sizeof(uint) +
-            sizeof(uint) +
-            payloadSize];
-
-        int offset = 0;
-
-        data[offset++] = (byte)MessageType.State;
-
-        BitConverter.GetBytes(
-            IPAddress.HostToNetworkOrder(payloadSize))
-            .CopyTo(data, offset);
-
-        offset += sizeof(int);
-
-        BitConverter.GetBytes(
-            IPAddress.HostToNetworkOrder((int)state.Row))
-            .CopyTo(data, offset);
-
-        offset += sizeof(int);
-
-        BitConverter.GetBytes(
-            IPAddress.HostToNetworkOrder((int)state.Col))
-            .CopyTo(data, offset);
-
-        offset += sizeof(int);
-
-        Buffer.BlockCopy(
-            payload,
-            0,
-            data,
-            offset,
-            payloadSize);
-
-        return data;
+        return gameState.ToBytes();
     }
 
-    public static Packet Deserialize(byte[] data, ref int length)
+    public static byte[] Serialize(GameState gameState)
     {
-        if (data == null || data.Length == 0 || length < 1)
+        return gameState.ToBytes();
+    }
+
+    public static Packet? Deserialize(byte[] data, ref int offSet, ref int readCount)
+    {
+        if (data == null || data.Length == 0 || readCount < 1)
             throw new ArgumentException("Pacote inválido.");
 
         GameMessage message = new(data[0]);
         MessageType action = message.Type;
 
-        if (action != MessageType.State)
+        if (action == MessageType.Connect || action == MessageType.Control)
+        {
+            readCount -= 1;
+            offSet += 1;
             return new Packet { GameMessage = new(data[0]) };
+        }
 
-        int offset = 1;
+        if (action != MessageType.State ||
+            readCount < (ConfigurationSingleton.MaxPlayersCount * Player.SizeOf +
+            ConfigurationSingleton.MaxCarCount * Car.SizeOf + 1))
+        {
+            return null;
+        }
 
-        int payloadSize = IPAddress.NetworkToHostOrder(
-            BitConverter.ToInt32(data, offset));
+        offSet++;
+        readCount--;
 
-        offset += sizeof(int);
-
-        uint row = (uint)IPAddress.NetworkToHostOrder(
-            BitConverter.ToInt32(data, offset));
-
-        offset += sizeof(int);
-
-        uint col = (uint)IPAddress.NetworkToHostOrder(
-            BitConverter.ToInt32(data, offset));
-
-        offset += sizeof(int);
-
-        if (data.Length < offset + payloadSize)
-            throw new InvalidOperationException(
-                "Tamanho do payload inválido.");
-        length -= (offset + (int)(col * row));
+        Player[] players = new Player[ConfigurationSingleton.MaxPlayersCount];
+        Car[] car = new Car[ConfigurationSingleton.MaxCarCount];
+        for (int i = 0; i < ConfigurationSingleton.MaxPlayersCount; i++)
+        {
+            players[i] = Player.FromBytes(data, ref offSet);
+            readCount -= Player.SizeOf;
+        }
+        for (int i = 0; i < ConfigurationSingleton.MaxCarCount; i++)
+        {
+            car[i] = Car.FromBytes(data, ref offSet);
+            readCount -= Car.SizeOf;
+        }
         return new Packet
         {
             GameMessage = message,
-            //GameState = new GameStateMatrix(row, col, data, offset)
+            GameState = GameState.CreateStateWith(players, car)
         };
-    }
-
-    public static byte[] Serialize(GameState gameState)
-    {
-        return null;
     }
 }

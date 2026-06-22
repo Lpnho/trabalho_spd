@@ -1,13 +1,17 @@
-﻿using Freeway.Models;
+﻿using Freeway.Core;
+using Freeway.Models;
 using Freeway.Models.Network;
 
 namespace Freeway.Interfaces.Network;
 
-internal interface INetworkHandler : IDisposable
+public interface INetworkHandler : IDisposable
 {
-    void Send(byte action);
-    void Send(GameState state);
+    void Send(Packet data, CancellationToken cancellationToken);
+    void Send(GameState data, CancellationToken cancellationToken);
+    void Send(GameMessage data, CancellationToken cancellationToken);
+    void Send(byte[] data, CancellationToken cancellationToken);
 
     event EventHandler<Packet> OnReceive;
-
+    event Action OnDisconnect;
+    event Func<Packet> OnConnect;
 }

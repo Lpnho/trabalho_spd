@@ -2,11 +2,13 @@
 using Freeway.Interfaces;
 using Freeway.Models;
 using Freeway.Models.Actions;
+using Freeway.Models.Network;
 using Freeway.Singleton;
+using Gtk;
 
 namespace Freeway.Handlers;
 
-internal class GameStateHandler : IStateLockManager, IGameStateUpdater
+public class GameStateHandler : IStateLockManager, IGameStateUpdater
 {
     private Player[] _players = new Player[ConfigurationSingleton.MaxPlayersCount];
     private object[] _playersLock = new object[ConfigurationSingleton.MaxPlayersCount];
@@ -212,23 +214,52 @@ internal class GameStateHandler : IStateLockManager, IGameStateUpdater
             Monitor.Exit(_playersLock[elementId]);
         }
     }
-    public void UpdatePlayerState(byte elementId, StateAction action)
-    {
-        if (elementId >= ConfigurationSingleton.MaxPlayersCount) return;
-        lock (_playersLock[elementId])
-        {
-            ref Player player = ref _players[elementId];
-            player.Row = StartSafeRow;
-            player.Column = GetColByPlayerId(elementId);
-            player.Score = 0;
-            var element = (action == StateAction.Connected) ?
-                new GameElement(GameElementType.Player, elementId) : GameElement.None;
-        }
-    }
 
     public GameState BlockPriorityGetState()
     {
         BlockPriority();
         return new GameState(_players, _cars);
+    }
+
+    public byte ConnectPlayer()
+    {
+        for (int i = 0; i < ConfigurationSingleton.MaxPlayersCount; ++i)
+        {
+            lock (_playersLock[i])
+            {
+                if (_players[i].State == StateAction.Disconnected)
+                {
+                    ref Player player = ref _players[i];
+                    player.State = StateAction.Connected;
+                    player.Row = StartSafeRow;
+                    player.Column = GetColByPlayerId((byte)i);
+                    player.Score = 0;
+                    _state.Set(player.Row, player.Column, new GameElement(GameElementType.Player, (byte)i));
+                    return (byte)i;
+                }
+            }
+        }
+        return (byte)ConfigurationSingleton.MaxPlayersCount;
+    }
+
+    public void DisconnectPlayer(byte playerId)
+    {
+        if (playerId > ConfigurationSingleton.MaxPlayersCount) return;
+        lock (_playersLock[playerId])
+        {
+            ref Player player = ref _players[playerId];
+            if (player.Row != StartSafeRow)
+            {
+                lock (_locks[player.Row])
+                {
+                    _state.Set(player.Row, player.Column, GameElement.None);
+                }
+            }
+
+            player.State = StateAction.Disconnected;
+            player.Row = StartSafeRow;
+            player.Column = GetColByPlayerId(playerId);
+            player.Score = 0;
+        }
     }
 }

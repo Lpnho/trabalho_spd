@@ -5,7 +5,7 @@ using Freeway.Singleton;
 
 namespace Freeway.Workers;
 
-internal class CarWorker(IGameStateUpdater _stateUpdater, byte _carId, string? threadName=null) : Worker(threadName)
+public class CarWorker(IGameStateUpdater _stateUpdater, byte _carId, string? threadName=null) : Worker(threadName)
 {
     protected override void Run(CancellationToken cancellationToken)
     {

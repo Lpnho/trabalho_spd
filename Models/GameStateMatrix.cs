@@ -1,6 +1,6 @@
 ﻿namespace Freeway.Models;
 
-internal class GameStateMatrix
+public class GameStateMatrix
 {
     public uint Row { get; private set; }
     public uint Col { get; private set; }

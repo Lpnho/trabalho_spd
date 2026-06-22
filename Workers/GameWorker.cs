@@ -5,7 +5,7 @@ using Freeway.Singleton;
 
 namespace Freeway.Workers;
 
-internal class GameWorker : Worker
+public class GameWorker : Worker
 {
     private IStateLockManager _stateLock;
 
@@ -20,7 +20,8 @@ internal class GameWorker : Worker
         {
             _stateLock.UnBlockPriority();
             Thread.Sleep(TimeSpan.FromMilliseconds(1000.0 / ConfigurationSingleton.FPS));
-            _stateLock.BlockPriority();
+            GameState gameState = _stateLock.BlockPriorityGetState();
+            OnStateUpdated?.Invoke(null, gameState);
         }
     }
     public event EventHandler<GameState>? OnStateUpdated;

@@ -3,7 +3,7 @@ using Eto.Forms;
 
 namespace Freeway.Ui;
 
-internal partial class StartWindow : Panel
+public partial class StartWindow : Panel
 {
     private Button _startServerButton;
     private Button _startClientButton;

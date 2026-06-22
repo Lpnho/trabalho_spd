@@ -3,7 +3,7 @@ using Eto.Forms;
 
 namespace Freeway.Ui;
 
-internal partial class ConnectWindow : Panel
+public partial class ConnectWindow : Panel
 {
     private TextBox _ipTextBox;
     private TextBox _portTextBox;

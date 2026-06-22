@@ -1,6 +1,6 @@
 ﻿namespace Freeway.Models;
 
-internal enum GameElementType : byte
+public enum GameElementType : byte
 {
     None = 0,
     Car = 1,

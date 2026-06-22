@@ -5,7 +5,7 @@ using Freeway.Workers;
 
 namespace Freeway.Services;
 
-internal class CarService : Worker
+public class CarService : Worker
 {
     private IGameStateUpdater _stateUpdater;
     private CarWorker[] _carWorkers = new CarWorker[ConfigurationSingleton.MaxCarCount];

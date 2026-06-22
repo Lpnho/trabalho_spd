@@ -6,7 +6,7 @@ using System.Collections.Concurrent;
 
 namespace Freeway.Workers;
 
-internal class InputWorker : Worker
+public class InputWorker : Worker
 {
     private BlockingCollection<GameMessage> _buffer = new(new ConcurrentQueue<GameMessage>());
     private IGameStateUpdater _stateHandler;
@@ -33,10 +33,9 @@ internal class InputWorker : Worker
                 GameMessage data = Pop(cancellationToken);
                 byte playerId = data.PlayerId;
 
-                if (data.StateAction == StateAction.Connected ||
-                    data.StateAction == StateAction.Disconnected)
+                if (data.StateAction == StateAction.Disconnected)
                 {
-                    _stateHandler.UpdatePlayerState(playerId, data.StateAction);
+                    _stateHandler.DisconnectPlayer(playerId);
                 }
                 else
                 {
@@ -48,4 +47,5 @@ internal class InputWorker : Worker
         {
         }
     }
+
 }

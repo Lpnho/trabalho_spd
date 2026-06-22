@@ -3,7 +3,7 @@ using Freeway.Interfaces;
 
 namespace Freeway.Ui;
 
-internal partial class MainWindow : Form, INavigationContext
+public partial class MainWindow : Form, INavigationContext
 {
     private Stack<Control> _stack = new();
     private CancellationTokenSource _cancellationTokenSource = new();

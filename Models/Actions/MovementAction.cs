@@ -1,5 +1,5 @@
 ﻿namespace Freeway.Models.Actions;
-internal enum MovementAction : byte
+public enum MovementAction : byte
 {
     Left = 0,
     Right = 1,

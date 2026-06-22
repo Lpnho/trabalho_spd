@@ -2,10 +2,11 @@
 
 namespace Freeway.Interfaces;
 
-internal interface IGameStateUpdater
+public interface IGameStateUpdater
 {
     void UpdateCarMovement(byte elementId, MovementAction action);
     void UpdatePlayerMovement(byte elementId, MovementAction action);
-    void UpdatePlayerState(byte elementId, StateAction action);
+    byte ConnectPlayer();
+    void DisconnectPlayer(byte playerId);
     int DifficultyLevel { get; set; }
 }

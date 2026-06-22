@@ -1,5 +1,5 @@
 ﻿namespace Freeway.Interfaces.Network;
-internal interface INetworkProvinder
+public interface INetworkProvinder
 {
     INetworkClient GetClient();
     INetworkServer GetServer();

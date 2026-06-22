@@ -1,7 +1,7 @@
 ﻿using Eto.Forms;
 
 namespace Freeway.Ui;
-internal partial class Scene : Panel
+public partial class Scene : Panel
 {
     private void InitializeComponents()
     {

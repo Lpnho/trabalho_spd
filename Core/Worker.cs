@@ -1,9 +1,9 @@
 ﻿namespace Freeway.Core;
 
-internal abstract class Worker
+public abstract class Worker
 {
     private Thread _thread;
-    private CancellationTokenSource? _internalTokenSource;
+    private CancellationTokenSource? _publicTokenSource;
     private CancellationTokenSource? _linkedTokenSource;
     private CancellationToken? _externalTokenSource;
     public bool IsRunning { get; private set; }
@@ -19,8 +19,8 @@ internal abstract class Worker
     {
         try
         {
-            _internalTokenSource = new CancellationTokenSource();
-            _linkedTokenSource = CancellationTokenSource.CreateLinkedTokenSource(_internalTokenSource.Token,
+            _publicTokenSource = new CancellationTokenSource();
+            _linkedTokenSource = CancellationTokenSource.CreateLinkedTokenSource(_publicTokenSource.Token,
                 _externalTokenSource!.Value);
             Run(_linkedTokenSource!.Token);
         }
@@ -42,7 +42,7 @@ internal abstract class Worker
     {
         if (IsRunning)
         {
-            _internalTokenSource?.Cancel();
+            _publicTokenSource?.Cancel();
             _linkedTokenSource?.Dispose();
             _thread.Join();
         }

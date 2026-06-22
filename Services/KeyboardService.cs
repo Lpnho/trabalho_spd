@@ -5,7 +5,7 @@ using Freeway.Models.Actions;
 
 namespace Freeway.Services;
 
-internal class KeyboardService
+public class KeyboardService
 {
     public void HandleInputEnvent(object? sender, KeyEventArgs args)
     {

@@ -1,24 +1,28 @@
-﻿using Freeway.Interfaces.Network;
+﻿using Freeway.Core;
+using Freeway.Interfaces.Network;
 using Freeway.Models;
 using Freeway.Models.Network;
 using System.Net;
 using System.Net.Sockets;
 
 namespace Freeway.Implementation.Sockets;
-internal class SocketNetworkServer : INetworkServer
+
+public class SocketNetworkServer : INetworkServer
 {
     public event EventHandler<Packet>? OnReceive;
+    public event Action? OnDisconnect;
+    public event Func<Packet>? OnConnect;
+
     private bool _running = false;
     private bool _disposed = false;
 
     private Socket? _socket;
     private Task? _serverTask;
 
-    private CancellationTokenSource? _internalTokenSource = new();
+    private CancellationTokenSource? _publicTokenSource = new();
     private CancellationTokenSource? _linkedTokenSource = new();
 
     private List<SocketNetworkClient> _clients = new();
-
 
     public void StartService(IPEndPoint endPoint, CancellationToken cancellationToken = default)
     {
@@ -28,9 +32,8 @@ internal class SocketNetworkServer : INetworkServer
         _socket.Bind(endPoint);
         _socket.Listen();
         _running = true;
-
-        _internalTokenSource = new CancellationTokenSource();
-        _linkedTokenSource = CancellationTokenSource.CreateLinkedTokenSource(_internalTokenSource.Token, cancellationToken);
+        _publicTokenSource = new CancellationTokenSource();
+        _linkedTokenSource = CancellationTokenSource.CreateLinkedTokenSource(_publicTokenSource.Token, cancellationToken);
 
         _serverTask = Run(cancellationToken);
         _serverTask.ConfigureAwait(false);
@@ -40,12 +43,11 @@ internal class SocketNetworkServer : INetworkServer
     {
         StartService(new IPEndPoint(address, port), cancellationToken);
     }
-
     public void StopService()
     {
         if (!_running) throw new InvalidOperationException("Server não está conectado.");
         _running = false;
-        _internalTokenSource?.Cancel();
+        _publicTokenSource?.Cancel();
         _serverTask?.Wait();
         _linkedTokenSource?.Dispose();
 
@@ -56,23 +58,6 @@ internal class SocketNetworkServer : INetworkServer
         _socket?.Dispose();
         _clients.Clear();
     }
-
-    public void Send(byte action)
-    {
-        foreach (var client in _clients)
-        {
-            client.Send(action);
-        }
-    }
-
-    public void Send(GameState state)
-    {
-        foreach (var client in _clients)
-        {
-            client.Send(state);
-        }
-    }
-
     private async Task Run(CancellationToken cancellationToken)
     {
         while (!cancellationToken.IsCancellationRequested)
@@ -80,15 +65,47 @@ internal class SocketNetworkServer : INetworkServer
             var socket = await _socket!.AcceptAsync(cancellationToken).ConfigureAwait(false);
             var client = new SocketNetworkClient();
             client.OnReceive += OnReceive;
-            client.Connect(socket, cancellationToken);
+            client.OnConnect += OnConnect;
+            //client.OnDisconnect += OnDisconnect;
             _clients.Add(client);
+            _ = Task.Run(() =>
+            {
+                client.Connect(socket, cancellationToken);
+                if (OnConnect != null)
+                {
+                    client.Send(OnConnect.Invoke(), cancellationToken);
+                }
+            }, cancellationToken).ConfigureAwait(false);
         }
+        OnDisconnect?.Invoke();
     }
-
     public void Dispose()
     {
         if (_disposed) return;
         StopService();
         _disposed = true;
     }
+    public void Send(Packet data, CancellationToken cancellationToken)
+    {
+        var serializedData = MessageSerializer.Serialize(data);
+        Send(serializedData, cancellationToken);
+    }
+    public void Send(GameMessage data, CancellationToken cancellationToken)
+    {
+        var serializedData = MessageSerializer.Serialize(data);
+        Send(serializedData, cancellationToken);
+    }
+    public void Send(GameState state, CancellationToken cancellationToken)
+    {
+        var serializedData = MessageSerializer.Serialize(state);
+        Send(serializedData, cancellationToken);
+    }
+    public void Send(byte[] data, CancellationToken cancellationToken)
+    {
+        foreach (var client in _clients)
+        {
+            client.Send(data, cancellationToken);
+        }
+    }
+
 }

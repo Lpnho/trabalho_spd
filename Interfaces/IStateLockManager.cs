@@ -2,7 +2,7 @@
 
 namespace Freeway.Interfaces;
 
-internal interface IStateLockManager
+public interface IStateLockManager
 {
     void BlockPriority();
     GameState BlockPriorityGetState();

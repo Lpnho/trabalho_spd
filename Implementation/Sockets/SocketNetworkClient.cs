@@ -7,11 +7,15 @@ using System.Net.Sockets;
 using System.Threading.Channels;
 
 namespace Freeway.Implementation.Sockets;
-internal class SocketNetworkClient : INetworkClient
+
+public class SocketNetworkClient : INetworkClient
 {
     public event EventHandler<Packet>? OnReceive;
+    public event Action? OnDisconnect;
+    public event Func<Packet>? OnConnect;
+
     private Channel<byte[]> _sentDataChannel = Channel.CreateUnbounded<byte[]>();
-    private CancellationTokenSource? _internalTokenSource = new();
+    private CancellationTokenSource? _publicTokenSource = new();
     private CancellationTokenSource? _linkedTokenSource = new();
     private Task? _sendTask;
     private Task? _receiveTask;
@@ -25,23 +29,12 @@ internal class SocketNetworkClient : INetworkClient
         if (_running) throw new InvalidOperationException("Cliente já está conectado.");
         _socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
         _socket.Connect(endPoint);
-        _running = true;
-
-        _internalTokenSource = new();
-        _linkedTokenSource =
-            CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, _internalTokenSource.Token);
-
-        _receiveTask = HandleReceiveAsync(_socket, _linkedTokenSource.Token);
-        _sendTask = HandleSendAsync(_socket, _linkedTokenSource.Token);
-
-        _receiveTask.ConfigureAwait(false);
-        _sendTask.ConfigureAwait(false);
+        Connect(_socket, cancellationToken);
     }
     public void Connect(IPAddress address, int port, CancellationToken token = default)
     {
         Connect(new IPEndPoint(address, port), token);
     }
-
     public void Connect(Socket socket, CancellationToken cancellationToken)
     {
         if (_running) throw new InvalidOperationException("Cliente já está conectado.");
@@ -49,23 +42,19 @@ internal class SocketNetworkClient : INetworkClient
         _socket = socket;
         _running = true;
 
-        _internalTokenSource = new();
+        _publicTokenSource = new();
         _linkedTokenSource =
-            CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, _internalTokenSource.Token);
+            CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, _publicTokenSource.Token);
 
         _receiveTask = HandleReceiveAsync(_socket, _linkedTokenSource.Token);
         _sendTask = HandleSendAsync(_socket, _linkedTokenSource.Token);
-
-        _receiveTask.ConfigureAwait(false);
-        _sendTask.ConfigureAwait(false);
-
     }
     public void Disconnect()
     {
         if (!_running) throw new InvalidOperationException("Cliente não está conectado.");
         _running = false;
 
-        _internalTokenSource?.Cancel();
+        _publicTokenSource?.Cancel();
 
         _receiveTask?.Wait();
         _sendTask?.Wait();
@@ -77,50 +66,91 @@ internal class SocketNetworkClient : INetworkClient
         _socket?.Dispose();
     }
 
-    public void Send(byte action)
-    {
-        _ = Send(MessageSerializer.Serialize(action));
-    }
-
-    public void Send(GameState state)
-    {
-        _ = Send(MessageSerializer.Serialize(state));
-    }
-
     private async Task HandleReceiveAsync(Socket client, CancellationToken cancellationToken = default)
     {
-        int decodeBufferIndex = 0;
-        byte[] decodeBuffer = new byte[1024];
-        byte[] buffer = new byte[1024];
+        int decodeBufferReadIndex = 0;
+        int decodeBufferWriteIndex = 0;
+
+        int decodeBufferCount = 0;
+
+        byte[] decodeBuffer = new byte[4 * 1024];
+        byte[] buffer = new byte[4 * 1024];
         while (!cancellationToken.IsCancellationRequested && client.Connected)
         {
-            int count = await client.ReceiveAsync(buffer, cancellationToken);
-            Buffer.BlockCopy(buffer, 0, decodeBuffer, decodeBufferIndex, count);
-            decodeBufferIndex += count;
-            while (decodeBufferIndex > 0 && !cancellationToken.IsCancellationRequested)
+            try
             {
-                Packet pack = MessageSerializer.Deserialize(decodeBuffer, ref decodeBufferIndex);
-                OnReceive?.Invoke(null, pack);
+                int lastReadIndex = 0;
+                int count = await client.ReceiveAsync(buffer, cancellationToken).ConfigureAwait(false);
+                do
+                {
+                    int readBytes = Math.Min(count,
+                        decodeBuffer.Length - decodeBufferWriteIndex);
+
+                    count -= readBytes;
+
+                    Buffer.BlockCopy(buffer, lastReadIndex, decodeBuffer, decodeBufferWriteIndex, readBytes);
+
+                    lastReadIndex += readBytes;
+                    decodeBufferWriteIndex += readBytes;
+                    decodeBufferCount += readBytes;
+
+                    while (!cancellationToken.IsCancellationRequested && decodeBufferCount > 0 && client.Connected)
+                    {
+                        Packet? pack = MessageSerializer.Deserialize(decodeBuffer,
+                            ref decodeBufferReadIndex,
+                            ref decodeBufferCount);
+                        if (pack == null)
+                            break;
+                        OnReceive?.Invoke(null, pack);
+                    }
+                    Buffer.BlockCopy(decodeBuffer, 0, decodeBuffer, decodeBufferReadIndex, decodeBufferCount);
+                    decodeBufferReadIndex = 0;
+                    decodeBufferWriteIndex = decodeBufferCount;
+                } while (lastReadIndex < count && lastReadIndex < buffer.Length && !cancellationToken.IsCancellationRequested);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex);
             }
         }
+        OnDisconnect?.Invoke();
     }
     private async Task HandleSendAsync(Socket client, CancellationToken cancellationToken = default)
     {
         while (!cancellationToken.IsCancellationRequested && client.Connected)
         {
-            byte[] data = await _sentDataChannel.Reader.ReadAsync(cancellationToken);
-            await client.SendAsync(data, cancellationToken);
+            byte[] data = await _sentDataChannel.Reader.ReadAsync(cancellationToken).ConfigureAwait(false);
+            await client.SendAsync(data, cancellationToken).ConfigureAwait(false);
         }
-    }
-    private async Task Send(byte[] data)
-    {
-        await _sentDataChannel.Writer.WriteAsync(data);
     }
 
     public void Dispose()
     {
-        if(_disposed) return;
-        Disconnect();   
+        if (_disposed) return;
+        Disconnect();
         _disposed = true;
     }
+
+    public void Send(GameState state, CancellationToken cancellationToken)
+    {
+        _ = SendAsync(MessageSerializer.Serialize(state), cancellationToken);
+    }
+    public void Send(Packet data, CancellationToken cancellationToken)
+    {
+        _ = SendAsync(MessageSerializer.Serialize(data), cancellationToken);
+    }
+    public void Send(GameMessage data, CancellationToken cancellationToken)
+    {
+        _ = SendAsync(MessageSerializer.Serialize(data), cancellationToken);
+    }
+    public void Send(byte[] data, CancellationToken cancellationToken)
+    {
+        _ = SendAsync(data, cancellationToken);
+    }
+    private async Task SendAsync(byte[] data, CancellationToken cancellationToken)
+    {
+        await _sentDataChannel.Writer.WriteAsync(data, cancellationToken);
+    }
+
+
 }

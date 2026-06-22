@@ -1,7 +1,7 @@
 ﻿using Freeway.Interfaces.Network;
 
 namespace Freeway.Implementation.Sockets;
-internal class SocketNetworkProvinder : INetworkProvinder
+public class SocketNetworkProvinder : INetworkProvinder
 {
     public INetworkClient GetClient()
     {

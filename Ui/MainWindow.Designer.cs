@@ -3,7 +3,7 @@ using Freeway.Interfaces;
 using Freeway.Singleton;
 
 namespace Freeway.Ui;
-internal partial class MainWindow : Form, INavigationContext
+public partial class MainWindow : Form, INavigationContext
 {
     Panel _container;
     private void InitializeComponents()
