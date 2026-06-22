@@ -1,7 +1,10 @@
 ﻿using Freeway.Core;
+using Freeway.Implementation.GoogleRpc;
 using Freeway.Interfaces.Network;
 using Freeway.Models;
+using Freeway.Models.Actions;
 using Freeway.Models.Network;
+using Google.Protobuf;
 using System.Net;
 using System.Net.Sockets;
 using System.Threading.Channels;
@@ -51,7 +54,7 @@ public class SocketNetworkClient : INetworkClient
     }
     public void Disconnect()
     {
-        if (!_running) throw new InvalidOperationException("Cliente não está conectado.");
+        if (!_running) return;
         _running = false;
 
         _publicTokenSource?.Cancel();
@@ -114,6 +117,7 @@ public class SocketNetworkClient : INetworkClient
             }
         }
         OnDisconnect?.Invoke();
+        Disconnect();
     }
     private async Task HandleSendAsync(Socket client, CancellationToken cancellationToken = default)
     {
@@ -122,6 +126,7 @@ public class SocketNetworkClient : INetworkClient
             byte[] data = await _sentDataChannel.Reader.ReadAsync(cancellationToken).ConfigureAwait(false);
             await client.SendAsync(data, cancellationToken).ConfigureAwait(false);
         }
+        Disconnect();
     }
 
     public void Dispose()
@@ -133,15 +138,16 @@ public class SocketNetworkClient : INetworkClient
 
     public void Send(GameState state, CancellationToken cancellationToken)
     {
-        _ = SendAsync(MessageSerializer.Serialize(state), cancellationToken);
+        Send(Packet.Create(state), cancellationToken);
     }
     public void Send(Packet data, CancellationToken cancellationToken)
     {
-        _ = SendAsync(MessageSerializer.Serialize(data), cancellationToken);
+        //_ = SendAsync(MessageSerializer.Serialize(data), cancellationToken);
+        _ = SendAsync(data.ToGrpcPacket().ToByteArray(), cancellationToken);
     }
     public void Send(GameMessage data, CancellationToken cancellationToken)
     {
-        _ = SendAsync(MessageSerializer.Serialize(data), cancellationToken);
+        Send(Packet.Create(data), cancellationToken);
     }
     public void Send(byte[] data, CancellationToken cancellationToken)
     {

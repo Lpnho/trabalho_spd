@@ -65,6 +65,13 @@ public readonly struct GameMessage
     {
         return new(type, playerId, action);
     }
+    public static GameMessage Create(
+        MessageType type
+        )
+    {
+        return new(type, 0, 0);
+    }
+
 
     public static GameMessage CreateConnectResponse(
         byte playerId)

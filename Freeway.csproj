@@ -9,24 +9,39 @@
 	</PropertyGroup>
 
 	<ItemGroup>
+		<None Remove="Implementation\GoogleRpc\Models.proto" />
+	</ItemGroup>
+
+	<ItemGroup>
 		<PackageReference Include="Eto.Forms" Version="2.11.0" />
 		<PackageReference Include="Eto.Platform.Gtk" Version="2.11.0" />
+
+		<PackageReference Include="Google.Protobuf" Version="3.33.0" />
+
+		<PackageReference Include="Grpc.Core" Version="2.46.6" />
+		<PackageReference Include="Grpc.Net.Client" Version="2.80.0" />
+		<PackageReference Include="Grpc.AspNetCore" Version="2.80.0" />
+		<PackageReference Include="Grpc.Tools" Version="2.81.1">
+
+			<PrivateAssets>all</PrivateAssets>
+			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+		</PackageReference>
 	</ItemGroup>
 
 	<ItemGroup>
-	  <None Update="Assets\car.png">
-	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-	  </None>
-	  <None Update="Assets\player.png">
-	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-	  </None>
-	  <None Update="Assets\scene.png">
-	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-	  </None>
+		<Protobuf Include="Implementation\GoogleRpc\Models.proto" />
 	</ItemGroup>
 
 	<ItemGroup>
-	  <Folder Include="Implementation\Grpc\" />
+		<None Update="Assets\car.png">
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</None>
+		<None Update="Assets\player.png">
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</None>
+		<None Update="Assets\scene.png">
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</None>
 	</ItemGroup>
 
 </Project>

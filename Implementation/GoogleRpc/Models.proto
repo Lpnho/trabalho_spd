@@ -1,0 +1,48 @@
+syntax = "proto3";
+
+package freeway;
+
+option csharp_namespace = "Freeway.Implementation.GoogleRpc.Models";
+
+
+message Packet
+{
+    uint32 GameMessage = 1;
+    GameState GameState = 2;
+}
+
+message GameState
+{
+    repeated Player Players = 1;
+    repeated Car Cars = 2;
+}
+
+message Player
+{
+    int32 Row = 1;
+    int32 Column = 2;
+    int32 Score = 3;
+    uint32 State = 4;
+    uint32 ColorR = 5;
+    uint32 ColorG = 6;
+    uint32 ColorB = 7;
+}
+
+message Car
+{
+    int32 Row = 1;
+    int32 Column = 2;
+    uint32 ColorR = 3;
+    uint32 ColorG = 4;
+    uint32 ColorB = 5;
+}
+
+message Result
+{
+    bool Success =1;
+}
+
+service ProtoGameService {
+  rpc Connect(stream Packet) returns (stream Packet);
+}
+

@@ -26,7 +26,7 @@ public class ServerWorker : Worker
         InputWorker inputWorker = new(gameState);
         CarService carService = new(gameState);
 
-        server.OnConnect += () => new Packet(GameMessage.CreateConnectResponse(gameState.ConnectPlayer()));
+        server.OnConnect += () => Packet.Create(GameMessage.CreateConnectResponse(gameState.ConnectPlayer()));
         server.OnReceive += (o, arg) => inputWorker.AddElement(arg.GameMessage, cancellationToken);
         gameWorker.OnStateUpdated += (o, arg) => server.Send(arg, cancellationToken);
 

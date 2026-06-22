@@ -14,7 +14,7 @@ public struct Car
     public byte[] ToBytes()
     {
         const int intSize = sizeof(int);
-        const int bufferSize = (2 * intSize) + 4;
+        const int bufferSize = SizeOf;
         byte[] buffer = new byte[bufferSize];
 
         int offSet = 0;

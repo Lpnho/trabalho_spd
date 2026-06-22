@@ -9,6 +9,15 @@ public class Packet
     {
         GameMessage = gameMessage;
     }
+    public static Packet Create(GameState state)
+    {
+        return new Packet { GameMessage = GameMessage.Create(MessageType.State), GameState = state };
+    }
+
+    public static Packet Create(GameMessage gameMessage)
+    {
+        return new Packet(gameMessage);
+    }
     public GameMessage GameMessage { get; set; }
     public GameState? GameState { get; set; }
     public byte[] ToBytes()

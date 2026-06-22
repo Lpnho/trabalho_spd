@@ -92,13 +92,11 @@ public class SocketNetworkServer : INetworkServer
     }
     public void Send(GameMessage data, CancellationToken cancellationToken)
     {
-        var serializedData = MessageSerializer.Serialize(data);
-        Send(serializedData, cancellationToken);
+        Send(Packet.Create(data), cancellationToken);
     }
     public void Send(GameState state, CancellationToken cancellationToken)
     {
-        var serializedData = MessageSerializer.Serialize(state);
-        Send(serializedData, cancellationToken);
+        Send(Packet.Create(state), cancellationToken);
     }
     public void Send(byte[] data, CancellationToken cancellationToken)
     {

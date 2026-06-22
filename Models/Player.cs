@@ -1,6 +1,7 @@
 ﻿using Freeway.Models.Actions;
 using System.Buffers.Binary;
 using System.Drawing;
+using System.Net;
 
 namespace Freeway.Models;
 
@@ -22,10 +23,11 @@ public struct Player
     public byte[] ToBytes()
     {
         const int intSize = sizeof(int);
-        const int bufferSize = (3 * intSize) + 4;
+        const int bufferSize = SizeOf;
         byte[] buffer = new byte[bufferSize];
 
         int offSet = 0;
+
 
         BinaryPrimitives.WriteInt32BigEndian(buffer.AsSpan(offSet, intSize), Row);
         offSet += intSize;
