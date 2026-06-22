@@ -5,10 +5,12 @@ using Freeway.Singleton;
 
 namespace Freeway.Workers;
 
-public class CarWorker(IGameStateUpdater _stateUpdater, byte _carId, string? threadName=null) : Worker(threadName)
+public class CarWorker(IGameStateUpdater _stateUpdater, string? threadName = null) : Worker(threadName)
 {
     protected override void Run(CancellationToken cancellationToken)
     {
+        byte _carId = _stateUpdater.ConnectCar();
+        if (_carId == ConfigurationSingleton.MaxCarCount) return;
         while (!cancellationToken.IsCancellationRequested)
         {
             int difficulty = _stateUpdater.DifficultyLevel;

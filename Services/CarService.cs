@@ -18,7 +18,7 @@ public class CarService : Worker
     {
         for (int i = 0; i < ConfigurationSingleton.MaxCarCount; ++i)
         {
-            _carWorkers[i] = new CarWorker(_stateUpdater, (byte)i, "Car Worker");
+            _carWorkers[i] = new CarWorker(_stateUpdater, "Car Worker");
             _carWorkers[i].Start(cancellationToken);
         }
         cancellationToken.WaitHandle.WaitOne();

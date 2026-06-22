@@ -1,6 +1,5 @@
 ﻿namespace Freeway.Models;
 
-
 public readonly struct GameElement
 {
     public byte Value { get; }
@@ -9,31 +8,28 @@ public readonly struct GameElement
         => (GameElementType)((Value >> 6) & 0b11);
 
     public byte ElementId
-        => (byte)((Value >> 3) & 0b111);
+        => (byte)(Value & 0b0011_1111);
 
     public GameElement(byte value)
     {
         Value = value;
     }
 
-    public GameElement(GameElementType type, byte ElementId)
+    public GameElement(GameElementType type, byte elementId)
     {
         Value = (byte)(
-            (((byte)type & 0b11) << 6) |
-            ((ElementId & 0b111) << 3));
+            ((byte)type << 6) |
+            (elementId & 0b0011_1111)
+        );
     }
-    public static GameElement None = new GameElement(GameElementType.None, 0);
+
+    public static GameElement None = new(GameElementType.None, 0);
 
     public static bool operator ==(GameElement left, GameElement right)
-    {
-        return left.Value == right.Value;
-    }
+        => left.Value == right.Value;
 
     public static bool operator !=(GameElement left, GameElement right)
-    {
-        return left.Value != right.Value;
-    }
-
+        => left.Value != right.Value;
 
     public static implicit operator byte(GameElement msg)
         => msg.Value;
@@ -42,7 +38,5 @@ public readonly struct GameElement
         => new(value);
 
     public override string ToString()
-    {
-        return $"Type={Type}, Elemebt={ElementId}";
-    }
+        => $"Type={Type}, ElementId={ElementId}";
 }

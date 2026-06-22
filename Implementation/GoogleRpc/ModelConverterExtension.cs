@@ -44,6 +44,7 @@ internal static class ModelConverterExtension
         {
             Row = c.Row,
             Column = c.Column,
+            State = (StateAction)c.State,
             ColorR = (byte)c.ColorR,
             ColorG = (byte)c.ColorG,
             ColorB = (byte)c.ColorB,
@@ -94,6 +95,7 @@ internal static class ModelConverterExtension
             {
                 Row = c.Row,
                 Column = c.Column,
+                State = (uint)c.State,
                 ColorR = (uint)c.ColorR,
                 ColorG = (uint)c.ColorG,
                 ColorB = (uint)c.ColorB,

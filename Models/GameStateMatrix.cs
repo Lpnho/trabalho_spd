@@ -1,37 +1,25 @@
-﻿namespace Freeway.Models;
+﻿using System.Text;
+
+namespace Freeway.Models;
 
 public class GameStateMatrix
 {
-    public uint Row { get; private set; }
-    public uint Col { get; private set; }
-    public uint Length { get => Row * Col; }
+    public int Row { get; private set; }
+    public int Col { get; private set; }
+    public int Length { get => Row * Col; }
 
     private GameElement[] _data;
 
-    public GameStateMatrix(uint row, uint col)
+    public GameStateMatrix(int row, int col)
     {
         Row = row;
         Col = col;
         _data = new GameElement[Row * Col];
-    }
-
-    public GameStateMatrix(uint row, uint col, byte[] data, int offSetBegin = 0) :
-        this(row, col)
-    {
-        if (data.Length < row * col)
+        for (int i = 0; i < _data.Length; i++)
         {
-            throw new ArgumentException("Dados Insuficientes para a criação do estado");
+            _data[i] = GameElement.None;
         }
-        Update(data, offSetBegin);
     }
-
-    public void Update(byte[] data, int offSetBegin = 0)
-    {
-        if ((data.Length - offSetBegin) < data.Length)
-            throw new ArgumentException("Dados Insuficientes para a criação do estado");
-        Buffer.BlockCopy(data, offSetBegin, _data, 0, data.Length);
-    }
-
 
     public GameElement Get(int row, int col)
     {
@@ -41,15 +29,19 @@ public class GameStateMatrix
     {
         _data[row * Col + col] = value;
     }
-    public byte[] ToByteArray()
+    public string ToString()
     {
-        return _data.Select(e => (byte)e).ToArray();
-    }
+        StringBuilder builder = new();
 
-    public GameStateMatrix Clone()
-    {
-        GameStateMatrix result = new GameStateMatrix(Row, Col);
-        Buffer.BlockCopy(_data, 0, result._data, 0, (int)result.Length);
-        return result;
+        for (int i = 0; i < Row; i++)
+        {
+            for (int j = 0; j < Col; j++)
+            {
+                builder.AppendFormat("{0,4}", (int)(_data[i * Col + j].Type));
+            }
+            builder.AppendLine();
+        }
+
+        return builder.ToString();
     }
 }

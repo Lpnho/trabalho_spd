@@ -16,17 +16,18 @@ public class GameStateHandler : IStateLockManager, IGameStateUpdater
     private Car[] _cars = new Car[ConfigurationSingleton.MaxCarCount];
     private object[] _carsLock = new object[ConfigurationSingleton.MaxCarCount];
 
-    private GameStateMatrix _state = new GameStateMatrix((uint)ConfigurationSingleton.GameMatrixSize.Width,
-            (uint)ConfigurationSingleton.GameMatrixSize.Height);
+    private GameStateMatrix _state = new GameStateMatrix(ConfigurationSingleton.NRows,
+            ConfigurationSingleton.NCols);
 
     private object[] _locks;
 
     private const int StartSafeRow = 0;
+    private const int StartSafeCol = 0;
     private object _priorityLock = new();
     private bool _blockPriority = false;
 
-    private uint _nRows => _state.Row;
-    private uint _nCols => _state.Col;
+    private int _nRows => _state.Row;
+    private int _nCols => _state.Col;
 
     private ReaderWriterLockSlim _diffReaderWriterLock = new();
     private int _difficultyLevel = 1;
@@ -72,7 +73,10 @@ public class GameStateHandler : IStateLockManager, IGameStateUpdater
     {
         int playerId = (message.PlayerId);
         return (playerId * 2 + 1);
-
+    }
+    public int GetRowByCarId(int message)
+    {
+        return ((message % (ConfigurationSingleton.NRows-2)) + 1);
     }
     public int GetIdByCol(int col)
     {
@@ -126,7 +130,7 @@ public class GameStateHandler : IStateLockManager, IGameStateUpdater
                 _state.Set(row, col, GameElement.None);
                 _state.Set(row, index, new GameElement(GameElementType.Car, elementId));
                 _cars[elementId].Row = row;
-                _cars[elementId].Column = col;
+                _cars[elementId].Column = index;
             }
         }
 
@@ -214,13 +218,15 @@ public class GameStateHandler : IStateLockManager, IGameStateUpdater
             Monitor.Exit(_playersLock[elementId]);
         }
     }
-
     public GameState BlockPriorityGetState()
     {
         BlockPriority();
+
+        //Console.Clear();
+        //Console.WriteLine(_state.ToString());
+
         return new GameState(_players, _cars);
     }
-
     public byte ConnectPlayer()
     {
         for (int i = 0; i < ConfigurationSingleton.MaxPlayersCount; ++i)
@@ -241,6 +247,26 @@ public class GameStateHandler : IStateLockManager, IGameStateUpdater
         }
         return (byte)ConfigurationSingleton.MaxPlayersCount;
     }
+    public byte ConnectCar()
+    {
+        for (int i = 0; i < ConfigurationSingleton.MaxCarCount; ++i)
+        {
+            lock (_carsLock[i])
+            {
+                if (_cars[i].State == StateAction.Disconnected)
+                {
+                    ref Car car = ref _cars[i];
+                    car.State = StateAction.Connected;
+                    car.Row =  GetRowByCarId(i);
+                    car.Column = StartSafeCol;
+                    _state.Set(car.Row, car.Column,
+                        new GameElement(GameElementType.Car, (byte)i));
+                    return (byte)i;
+                }
+            }
+        }
+        return (byte)ConfigurationSingleton.MaxCarCount;
+    }
 
     public void DisconnectPlayer(byte playerId)
     {
@@ -260,6 +286,27 @@ public class GameStateHandler : IStateLockManager, IGameStateUpdater
             player.Row = StartSafeRow;
             player.Column = GetColByPlayerId(playerId);
             player.Score = 0;
+        }
+    }
+    public void DisconnectCar(byte carId)
+    {
+        if (carId > ConfigurationSingleton.MaxCarCount) return;
+        lock (_carsLock[carId])
+        {
+            ref Car car = ref _cars[carId];
+            int row = GetRowByCarId(carId);
+
+            if (car.Column != StartSafeCol)
+            {
+                lock (_locks[row])
+                {
+                    _state.Set(car.Row, car.Column,
+                        GameElement.None);
+                }
+            }
+            car.Row = row;
+            car.Column = StartSafeCol;
+            car.State = StateAction.Disconnected;
         }
     }
 }

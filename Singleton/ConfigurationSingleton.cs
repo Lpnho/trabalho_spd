@@ -11,7 +11,6 @@ public static class ConfigurationSingleton
     public const string ImageCarPath = "Assets/car.png";
     public static readonly Size DefaultSize = new(1024, 768); // Proporção 4:3
     public static readonly Size MinimumSize = new(1024, 768);
-    public static readonly Size GameMatrixSize = new(1024, 768);
     public const uint MaxPlayersCount = 0b01 << 3;
     public const uint MaxCarCount = 20;
     public const int NRows = 12;

@@ -32,9 +32,10 @@ message Car
 {
     int32 Row = 1;
     int32 Column = 2;
-    uint32 ColorR = 3;
-    uint32 ColorG = 4;
-    uint32 ColorB = 5;
+    uint32 State = 3;
+    uint32 ColorR = 4;
+    uint32 ColorG = 5;
+    uint32 ColorB = 6;
 }
 
 message Result
