@@ -25,42 +25,22 @@ public class MessageSerializer
         return gameState.ToBytes();
     }
 
-    public static Packet? Deserialize(byte[] data, ref int offSet, ref int readCount)
+    public static Packet? Deserialize(byte[] data)
     {
-        if (data == null || data.Length == 0 || readCount < 1)
-            throw new ArgumentException("Pacote inválido.");
-
         GameMessage message = new(data[0]);
         MessageType action = message.Type;
-
-        if (action == MessageType.Connect || action == MessageType.Control)
-        {
-            readCount -= 1;
-            offSet += 1;
-            return new Packet { GameMessage = new(data[0]) };
-        }
-
-        if (action != MessageType.State ||
-            readCount < (ConfigurationSingleton.MaxPlayersCount * Player.SizeOf +
-            ConfigurationSingleton.MaxCarCount * Car.SizeOf + 1))
-        {
-            return null;
-        }
-
-        offSet++;
-        readCount--;
-
+        if (action != MessageType.State) return null;
+        
+        int offSet = 1;
         Player[] players = new Player[ConfigurationSingleton.MaxPlayersCount];
         Car[] car = new Car[ConfigurationSingleton.MaxCarCount];
         for (int i = 0; i < ConfigurationSingleton.MaxPlayersCount; i++)
         {
             players[i] = Player.FromBytes(data, ref offSet);
-            readCount -= Player.SizeOf;
         }
         for (int i = 0; i < ConfigurationSingleton.MaxCarCount; i++)
         {
             car[i] = Car.FromBytes(data, ref offSet);
-            readCount -= Car.SizeOf;
         }
         return new Packet
         {

@@ -24,6 +24,8 @@ public struct Car
         offSet += intSize;
         BinaryPrimitives.WriteInt32BigEndian(buffer.AsSpan(offSet, intSize), Column);
         offSet += intSize;
+        
+        buffer[offSet++] = (byte)State;
         buffer[offSet++] = ColorR;
         buffer[offSet++] = ColorG;
         buffer[offSet] = ColorB;
@@ -42,11 +44,12 @@ public struct Car
         int column = BinaryPrimitives.ReadInt32BigEndian(data.AsSpan(offSet, intSize));
         offSet += intSize;
 
+        byte state = data[offSet++];
         byte colorR = data[offSet++];
         byte colorG = data[offSet++];
         byte colorB = data[offSet++];
 
-        return new Car { Row = row, Column = column, ColorR = colorR, ColorG = colorG, ColorB = colorB };
+        return new Car { Row = row, Column = column, State = (StateAction)state, ColorR = colorR, ColorG = colorG, ColorB = colorB };
     }
     public const int SizeOf = (2 * sizeof(int)) + 4;
 

@@ -71,49 +71,28 @@ public class SocketNetworkClient : INetworkClient
 
     private async Task HandleReceiveAsync(Socket client, CancellationToken cancellationToken = default)
     {
-        int decodeBufferReadIndex = 0;
-        int decodeBufferWriteIndex = 0;
-
-        int decodeBufferCount = 0;
-
-        byte[] decodeBuffer = new byte[4 * 1024];
+        const int headerSize = 1;
         byte[] buffer = new byte[4 * 1024];
+        NetworkStream stream = new NetworkStream(client);
         while (!cancellationToken.IsCancellationRequested && client.Connected)
         {
-            try
+            int bufferOffSet = 0;
+            await stream.ReadExactlyAsync(buffer, bufferOffSet, headerSize, cancellationToken).ConfigureAwait(false);
+            GameMessage header = (GameMessage)buffer[0];
+
+            if (header.Type == MessageType.State)
             {
-                int lastReadIndex = 0;
-                int count = await client.ReceiveAsync(buffer, cancellationToken).ConfigureAwait(false);
-                do
+                bufferOffSet += headerSize;
+                await stream.ReadExactlyAsync(buffer, bufferOffSet, GameState.SizeOf, cancellationToken).ConfigureAwait(false);
+                Packet? pack = MessageSerializer.Deserialize(buffer);
+                if (pack != null)
                 {
-                    int readBytes = Math.Min(count,
-                        decodeBuffer.Length - decodeBufferWriteIndex);
-
-                    count -= readBytes;
-
-                    Buffer.BlockCopy(buffer, lastReadIndex, decodeBuffer, decodeBufferWriteIndex, readBytes);
-
-                    lastReadIndex += readBytes;
-                    decodeBufferWriteIndex += readBytes;
-                    decodeBufferCount += readBytes;
-
-                    while (!cancellationToken.IsCancellationRequested && decodeBufferCount > 0 && client.Connected)
-                    {
-                        Packet? pack = MessageSerializer.Deserialize(decodeBuffer,
-                            ref decodeBufferReadIndex,
-                            ref decodeBufferCount);
-                        if (pack == null)
-                            break;
-                        OnReceive?.Invoke(null, pack);
-                    }
-                    Buffer.BlockCopy(decodeBuffer, 0, decodeBuffer, decodeBufferReadIndex, decodeBufferCount);
-                    decodeBufferReadIndex = 0;
-                    decodeBufferWriteIndex = decodeBufferCount;
-                } while (lastReadIndex < count && lastReadIndex < buffer.Length && !cancellationToken.IsCancellationRequested);
+                    OnReceive?.Invoke(null, pack);
+                }
             }
-            catch (Exception ex)
+            else
             {
-                Console.WriteLine(ex);
+                OnReceive?.Invoke(null, Packet.Create(header));
             }
         }
         OnDisconnect?.Invoke();
@@ -142,8 +121,7 @@ public class SocketNetworkClient : INetworkClient
     }
     public void Send(Packet data, CancellationToken cancellationToken)
     {
-        //_ = SendAsync(MessageSerializer.Serialize(data), cancellationToken);
-        _ = SendAsync(data.ToGrpcPacket().ToByteArray(), cancellationToken);
+        _ = SendAsync(data.ToBytes(), cancellationToken);
     }
     public void Send(GameMessage data, CancellationToken cancellationToken)
     {

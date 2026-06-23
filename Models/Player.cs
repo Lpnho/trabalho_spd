@@ -28,7 +28,6 @@ public struct Player
 
         int offSet = 0;
 
-
         BinaryPrimitives.WriteInt32BigEndian(buffer.AsSpan(offSet, intSize), Row);
         offSet += intSize;
         BinaryPrimitives.WriteInt32BigEndian(buffer.AsSpan(offSet, intSize), Column);

@@ -34,8 +34,7 @@ public class GameState
     }
     public byte[] ToBytes(int offSetBegin = 0)
     {
-        byte[] result = new byte[offSetBegin + ConfigurationSingleton.MaxPlayersCount * Player.SizeOf
-                                + ConfigurationSingleton.MaxCarCount * Car.SizeOf];
+        byte[] result = new byte[offSetBegin + SizeOf];
         int offSet = offSetBegin;
         for (int i = 0; i < Players.Length; i++, offSet += Player.SizeOf)
         {
@@ -48,4 +47,6 @@ public class GameState
         }
         return result;
     }
+    public const int SizeOf = ConfigurationSingleton.MaxPlayersCount * Player.SizeOf
+                                + ConfigurationSingleton.MaxCarCount * Car.SizeOf;
 }
