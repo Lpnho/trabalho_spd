@@ -11,7 +11,7 @@ using System.Threading.Channels;
 
 namespace Freeway.Implementation.Sockets;
 
-public class SocketNetworkClient : INetworkClient
+public class MqttNetworkClient : INetworkClient
 {
     public event EventHandler<Packet>? OnReceive;
     public event Action? OnDisconnect;
@@ -64,9 +64,11 @@ public class SocketNetworkClient : INetworkClient
 
         _linkedTokenSource?.Dispose();
 
+
         _socket?.Disconnect(false);
         _socket?.Dispose();
     }
+
     private async Task HandleReceiveAsync(Socket client, CancellationToken cancellationToken = default)
     {
         const int headerSize = 1;
@@ -94,6 +96,7 @@ public class SocketNetworkClient : INetworkClient
             }
         }
         OnDisconnect?.Invoke();
+        Disconnect();
     }
     private async Task HandleSendAsync(Socket client, CancellationToken cancellationToken = default)
     {
@@ -102,13 +105,16 @@ public class SocketNetworkClient : INetworkClient
             byte[] data = await _sentDataChannel.Reader.ReadAsync(cancellationToken).ConfigureAwait(false);
             await client.SendAsync(data, cancellationToken).ConfigureAwait(false);
         }
+        Disconnect();
     }
+
     public void Dispose()
     {
         if (_disposed) return;
         Disconnect();
         _disposed = true;
     }
+
     public void Send(GameState state, CancellationToken cancellationToken)
     {
         Send(Packet.Create(state), cancellationToken);
@@ -129,5 +135,6 @@ public class SocketNetworkClient : INetworkClient
     {
         await _sentDataChannel.Writer.WriteAsync(data, cancellationToken);
     }
+
 
 }

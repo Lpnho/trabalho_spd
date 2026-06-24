@@ -68,7 +68,6 @@ public class GrpcNetworkServer : ProtoGameService.ProtoGameServiceBase, INetwork
         _running = true;
         _linkedTokenSource!.Token.WaitHandle.WaitOne();
         _server.ShutdownAsync().Wait();
-        StopService();
     }
     public void Dispose()
     {

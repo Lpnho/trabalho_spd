@@ -2,12 +2,13 @@
 using Freeway.Interfaces.Network;
 using Freeway.Models;
 using Freeway.Models.Network;
+using MQTTnet.Server;
 using System.Net;
 using System.Net.Sockets;
 
 namespace Freeway.Implementation.Sockets;
 
-public class SocketNetworkServer : INetworkServer
+public class MqttNetworkServer : INetworkServer
 {
     public event EventHandler<Packet>? OnReceive;
     public event Action? OnDisconnect;
@@ -16,8 +17,8 @@ public class SocketNetworkServer : INetworkServer
     private bool _running = false;
     private bool _disposed = false;
 
-    private Socket? _socket;
-    private Task? _serverTask;
+    private MqttServer? _mqttServer;
+    private Thread? _serverThread;
 
     private CancellationTokenSource? _publicTokenSource = new();
     private CancellationTokenSource? _linkedTokenSource = new();
@@ -27,16 +28,17 @@ public class SocketNetworkServer : INetworkServer
     public void StartService(IPEndPoint endPoint, CancellationToken cancellationToken = default)
     {
         if (_running) return;
+        var factory = new MqttServerFactory();
+        var options = new MqttServerOptionsBuilder().WithDefaultEndpoint().Build();
+        _mqttServer = factory.CreateMqttServer(options);
 
-        _socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
-        _socket.Bind(endPoint);
-        _socket.Listen();
-        _running = true;
         _publicTokenSource = new CancellationTokenSource();
         _linkedTokenSource = CancellationTokenSource.CreateLinkedTokenSource(_publicTokenSource.Token, cancellationToken);
 
-        _serverTask = Run(cancellationToken);
-        _serverTask.ConfigureAwait(false);
+        _running = true;
+        _serverThread = new Thread(Run);
+        _serverThread.Name = "Mqtt Server Thread";
+        _serverThread.Start();
     }
     public void StartService(IPAddress address, int port, CancellationToken cancellationToken = default)
     {
@@ -44,38 +46,22 @@ public class SocketNetworkServer : INetworkServer
     }
     public void StopService()
     {
-        if (!_running) throw new InvalidOperationException("Server não está conectado.");
+        if (!_running) return;
         _running = false;
         _publicTokenSource?.Cancel();
-        _serverTask?.Wait();
+        _serverThread?.Join();
         _linkedTokenSource?.Dispose();
 
         Parallel.ForEach(_clients,
             (c) => c.Disconnect()
         );
-        _socket?.Close();
-        _socket?.Dispose();
         _clients.Clear();
     }
-    private async Task Run(CancellationToken cancellationToken)
+    private void Run()
     {
-        while (!cancellationToken.IsCancellationRequested)
-        {
-            var socket = await _socket!.AcceptAsync(cancellationToken).ConfigureAwait(false);
-            var client = new SocketNetworkClient();
-            client.OnReceive += OnReceive;
-            client.OnConnect += OnConnect;
-            //client.OnDisconnect += OnDisconnect;
-            _clients.Add(client);
-            _ = Task.Run(() =>
-            {
-                client.Connect(socket, cancellationToken);
-                if (OnConnect != null)
-                {
-                    client.Send(OnConnect.Invoke(), cancellationToken);
-                }
-            }, cancellationToken).ConfigureAwait(false);
-        }
+        _mqttServer!.StartAsync().Wait(_linkedTokenSource!.Token);
+        _linkedTokenSource!.Token.WaitHandle.WaitOne();
+        _mqttServer!.StopAsync().Wait();
         OnDisconnect?.Invoke();
     }
     public void Dispose()

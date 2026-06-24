@@ -80,7 +80,6 @@ public class GrpcNetworkClient :
         finally
         {
             OnDisconnect?.Invoke();
-            Disconnect();
         }
     }
     private async Task HandleSendAsync(IClientStreamWriter<Models.Packet> client, CancellationToken cancellationToken = default)
@@ -95,7 +94,6 @@ public class GrpcNetworkClient :
         catch (Exception ex)
         {
             Console.WriteLine(ex);
-            Disconnect();
         }
     }
     public void Dispose()
