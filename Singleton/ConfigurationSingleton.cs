@@ -9,6 +9,8 @@ public static class ConfigurationSingleton
     public const string ImageBackgroundPath = "Assets/scene.png";
     public const string ImagePlayerPath = "Assets/player.png";
     public const string ImageCarPath = "Assets/car.png";
+    public const string MqttServerListenerChannel = "server/input";
+    public const string MqttServerWritterChannel = "server/output";
     public static readonly Size DefaultSize = new(1024, 768); // Proporção 4:3
     public static readonly Size MinimumSize = new(1024, 768);
     public const int MaxPlayersCount = 0b01 << 3;

@@ -5,11 +5,11 @@ public class MqttNetworkProvinder : INetworkProvinder
 {
     public INetworkClient GetClient()
     {
-        return new SocketNetworkClient();
+        return new MqttNetworkClient();
     }
 
     public INetworkServer GetServer()
     {
-        return new SocketNetworkServer();
+        return new MqttNetworkServer();
     }
 }

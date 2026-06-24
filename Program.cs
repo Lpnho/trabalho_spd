@@ -11,8 +11,9 @@ public class Program
     [STAThread]
     public static void Main(string[] args)
     {
-        new NetworkProvinderSingleton(new SocketNetworkProvinder());
+        //new NetworkProvinderSingleton(new SocketNetworkProvinder());
         //new NetworkProvinderSingleton(new GrpcNetworkProvinder());
+        new NetworkProvinderSingleton(new MqttNetworkProvinder());
         new Application(new Eto.GtkSharp.Platform()).Run(new MainWindow());
     }
 }

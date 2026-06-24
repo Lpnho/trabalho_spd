@@ -5,7 +5,7 @@ using Freeway.Models.Network;
 using Google.Protobuf;
 using Google.Protobuf.Collections;
 
-namespace Freeway.Implementation.GoogleRpc;
+namespace Freeway.Implementation.GoogleRpc.Utils;
 
 internal static class ModelConverterExtension
 {
