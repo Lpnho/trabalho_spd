@@ -28,6 +28,7 @@ public class ServerWorker : Worker
 
         server.OnConnect += () => Packet.Create(GameMessage.CreateConnectResponse(gameState.ConnectPlayer()));
         server.OnReceive += (o, arg) => inputWorker.AddElement(arg.GameMessage, cancellationToken);
+        server.OnClientDisconect += (i) => gameState.DisconnectPlayer(i.GameMessage.PlayerId);
         gameWorker.OnStateUpdated += (o, arg) => server.Send(arg, cancellationToken);
 
         gameWorker.Start(cancellationToken);

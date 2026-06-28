@@ -69,9 +69,9 @@ public class GameStateHandler : IStateLockManager, IGameStateUpdater
         }
 
     }
-    public int GetColByPlayerId(GameMessage message)
+   
+    public int GetColByPlayerId(int playerId)
     {
-        int playerId = (message.PlayerId);
         return (playerId * 2 + 1);
     }
     public int GetRowByCarId(int message)
@@ -238,7 +238,7 @@ public class GameStateHandler : IStateLockManager, IGameStateUpdater
                     ref Player player = ref _players[i];
                     player.State = StateAction.Connected;
                     player.Row = StartSafeRow;
-                    player.Column = GetColByPlayerId((byte)i);
+                    player.Column = GetColByPlayerId(i);
                     player.Score = 0;
                     _state.Set(player.Row, player.Column, new GameElement(GameElementType.Player, (byte)i));
                     return (byte)i;

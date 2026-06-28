@@ -7,6 +7,7 @@ using MQTTnet;
 using MQTTnet.Protocol;
 using MQTTnet.Server;
 using System.Buffers;
+using System.Collections.Concurrent;
 using System.Net;
 using System.Net.Sockets;
 using System.Threading.Channels;
@@ -18,10 +19,12 @@ public class MqttNetworkServer : INetworkServer
     public event EventHandler<Packet>? OnReceive;
     public event Action? OnDisconnect;
     public event Func<Packet>? OnConnect;
+    public event Action<Packet>? OnClientDisconect;
 
     private bool _running = false;
     private bool _disposed = false;
 
+    private readonly ConcurrentDictionary<string, GameMessage> _clientIds = new();
     private MqttServer? _mqttServer;
     private Thread? _serverThread;
     private Task? _sendTask;
@@ -47,8 +50,10 @@ public class MqttNetworkServer : INetworkServer
         _serverThread = new Thread(Run);
         _serverThread.Name = "Mqtt Server Thread";
         _serverThread.Start();
-
+        _clientIds.Clear();
         _mqttServer.InterceptingPublishAsync += HandleReceiveAsync;
+        _mqttServer.ClientDisconnectedAsync += ClientDisconnectedAsync;
+        //_mqttServer.ClientDisconnectedAsync +=
         _sendTask = HandleSendAsync(_linkedTokenSource.Token);
     }
     public void StartService(IPAddress address, int port, CancellationToken cancellationToken = default)
@@ -88,7 +93,9 @@ public class MqttNetworkServer : INetworkServer
         if (OnConnect == null) return Task.CompletedTask;
         try
         {
-            byte[] data = OnConnect.Invoke().ToBytes();
+            Packet packet = OnConnect.Invoke();
+            byte[] data = packet.ToBytes();
+            _clientIds[args.ClientId] = packet.GameMessage;
             args.ResponseUserProperties ??= new();
             args.ResponseUserProperties.Add(new MQTTnet.Packets.MqttUserProperty("id", data));
             args.ReasonCode = MqttConnectReasonCode.Success;
@@ -99,7 +106,15 @@ public class MqttNetworkServer : INetworkServer
         }
         return Task.CompletedTask;
     }
+    public Task ClientDisconnectedAsync(ClientDisconnectedEventArgs args)
+    {
+        if (_clientIds.TryRemove(args.ClientId, out var id) && OnClientDisconect != null)
+        {
+            OnClientDisconect(Packet.Create(id));
+        }
 
+        return Task.CompletedTask;
+    }
     private async Task HandleReceiveAsync(InterceptingPublishEventArgs args)
     {
         if (args.ApplicationMessage.Topic != ConfigurationSingleton.MqttServerWritterChannel)

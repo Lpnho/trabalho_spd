@@ -12,6 +12,7 @@ public class SocketNetworkServer : INetworkServer
     public event EventHandler<Packet>? OnReceive;
     public event Action? OnDisconnect;
     public event Func<Packet>? OnConnect;
+    public event Action<Packet>? OnClientDisconect;
 
     private bool _running = false;
     private bool _disposed = false;
@@ -72,7 +73,9 @@ public class SocketNetworkServer : INetworkServer
                 client.Connect(socket, cancellationToken);
                 if (OnConnect != null)
                 {
-                    client.Send(OnConnect.Invoke(), cancellationToken);
+                    Packet packet = OnConnect.Invoke();
+                    client.Send(packet, cancellationToken);
+                    client.OnDisconnect += () => OnClientDisconect?.Invoke(packet);
                 }
             }, cancellationToken).ConfigureAwait(false);
         }

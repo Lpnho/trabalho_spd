@@ -16,6 +16,7 @@ public class GrpcNetworkServer : ProtoGameService.ProtoGameServiceBase, INetwork
     public event EventHandler<Packet>? OnReceive;
     public event Action? OnDisconnect;
     public event Func<Packet>? OnConnect;
+    public event Action<Packet>? OnClientDisconect;
 
     private bool _running = false;
     private bool _disposed = false;
@@ -105,6 +106,7 @@ public class GrpcNetworkServer : ProtoGameService.ProtoGameServiceBase, INetwork
     }
     public override async Task Connect(IAsyncStreamReader<Models.Packet> requestStream, IServerStreamWriter<Models.Packet> responseStream, ServerCallContext context)
     {
+        if (OnConnect == null) throw new InvalidOperationException("Erro callback de conexão não cadastrada!");
 
         CancellationTokenSource tokenSource = CancellationTokenSource.CreateLinkedTokenSource(
             _publicTokenSource!.Token,
@@ -113,7 +115,7 @@ public class GrpcNetworkServer : ProtoGameService.ProtoGameServiceBase, INetwork
 
         var clientId = context.Peer;
 
-        var connectPacket = OnConnect?.Invoke();
+        Packet connectPacket = OnConnect.Invoke();
 
         if (connectPacket != null)
         {
@@ -142,6 +144,7 @@ public class GrpcNetworkServer : ProtoGameService.ProtoGameServiceBase, INetwork
         finally
         {
             _clients.TryRemove(clientId, out _);
+            OnClientDisconect?.Invoke(connectPacket!);
             OnDisconnect?.Invoke();
         }
     }
