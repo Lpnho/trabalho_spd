@@ -13,7 +13,7 @@ public class Program
     {
         //new NetworkProvinderSingleton(new SocketNetworkProvinder());
         //new NetworkProvinderSingleton(new GrpcNetworkProvinder());
-        new NetworkProvinderSingleton(new MqttNetworkProvinder());
+        //new NetworkProvinderSingleton(new MqttNetworkProvinder());
         new Application(new Eto.GtkSharp.Platform()).Run(new MainWindow());
     }
 }

@@ -1,6 +1,6 @@
 ﻿using Freeway.Interfaces.Network;
 
-namespace Freeway.Implementation.Sockets;
+namespace Freeway.Implementation.Mqtt;
 public class MqttNetworkProvinder : INetworkProvinder
 {
     public INetworkClient GetClient()

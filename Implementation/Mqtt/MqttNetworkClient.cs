@@ -16,7 +16,7 @@ using System.Net;
 using System.Net.Sockets;
 using System.Threading.Channels;
 
-namespace Freeway.Implementation.Sockets;
+namespace Freeway.Implementation.Mqtt;
 
 public class MqttNetworkClient : INetworkClient
 {

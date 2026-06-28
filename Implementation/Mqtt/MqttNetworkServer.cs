@@ -12,7 +12,7 @@ using System.Net;
 using System.Net.Sockets;
 using System.Threading.Channels;
 
-namespace Freeway.Implementation.Sockets;
+namespace Freeway.Implementation.Mqtt;
 
 public class MqttNetworkServer : INetworkServer
 {
@@ -149,9 +149,9 @@ public class MqttNetworkServer : INetworkServer
                 OnReceive?.Invoke(null, Packet.Create(header));
             }
         }
-        catch (Exception ex)
+        catch (Exception)
         {
-            Console.WriteLine(ex);
+            //Console.WriteLine(ex);
         }
         finally
         {

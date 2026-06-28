@@ -11,7 +11,7 @@ public partial class MainWindow : Form, INavigationContext
     {
         InitializeComponents();
         Closing += OnClosing;
-        NavigateTo(new StartWindow(this, _cancellationTokenSource.Token));
+        NavigateTo(new SelectProvinderWindow(this, _cancellationTokenSource.Token));
     }
 
 
