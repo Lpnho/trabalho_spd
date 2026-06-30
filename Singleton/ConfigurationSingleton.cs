@@ -19,6 +19,7 @@ public static class ConfigurationSingleton
     public const int NCols = 18;
 
     public const int MaxDificultyLevel = 5;
+    public const int OffSetDrawScore = 2;
     public const int MinDificultyLevel = 1;
 
    

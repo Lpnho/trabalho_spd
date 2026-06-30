@@ -100,9 +100,9 @@ public class MqttNetworkServer : INetworkServer
             args.ResponseUserProperties.Add(new MQTTnet.Packets.MqttUserProperty("id", data));
             args.ReasonCode = MqttConnectReasonCode.Success;
         }
-        catch (Exception ex)
+        catch (Exception)
         {
-            Console.WriteLine(ex);
+            //Console.WriteLine(ex);
         }
         return Task.CompletedTask;
     }
@@ -173,9 +173,9 @@ public class MqttNetworkServer : INetworkServer
                     .InjectApplicationMessage(new(msg), cancellationToken).ConfigureAwait(false);
             }
         }
-        catch (Exception ex)
+        catch (Exception)
         {
-            Console.WriteLine(ex);
+            //Console.WriteLine(ex);
         }
     }
 

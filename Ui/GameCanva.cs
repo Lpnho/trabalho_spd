@@ -13,10 +13,50 @@ public class GameCanva : Drawable
     private Bitmap _player = new(ConfigurationSingleton.ImagePlayerPath);
     private Bitmap _car = new(ConfigurationSingleton.ImageCarPath);
 
+    Font _font = new Font("Arial", 20, FontStyle.Bold);
+    Brush _brush = new SolidBrush(Colors.Red);
+
+
     private GameState? _gameState;
     private GameState? _oldGameState;
 
     private bool StateHasChanged => _gameState?.GetHashCode() != _oldGameState?.GetHashCode();
+    //protected override void OnPaint(PaintEventArgs e)
+    //{
+    //    base.OnPaint(e);
+
+    //    var g = e.Graphics;
+
+    //    g.DrawImage(_background, 0, 0, Width, Height);
+    //    if (_gameState == null) return;
+
+    //    float cellWidth = (float)Width / ConfigurationSingleton.NCols;
+    //    float cellHeight = (float)Height / ConfigurationSingleton.NRows;
+
+    //    for (int i = 0; i < _gameState.Players.Length; i++)
+    //    {
+    //        if (_gameState.Players[i].State == Models.Actions.StateAction.Connected)
+    //        {
+    //            float col = _gameState.Players[i].Column * cellWidth;
+    //            float row = _gameState.Players[i].Row * cellHeight;
+
+    //            row = Height - row - cellHeight;
+
+    //            g.DrawImage(_player, col, row, cellWidth, cellHeight);
+    //        }
+    //    }
+
+    //    for (int i = 0; i < _gameState.Cars.Length; i++)
+    //    {
+    //        float col = _gameState.Cars[i].Column * cellWidth;
+    //        float row = _gameState.Cars[i].Row * cellHeight;
+
+    //        row = Height - row - cellHeight;
+
+    //        g.DrawImage(_car, col, row, cellWidth, cellHeight);
+    //    }
+    //}
+
     protected override void OnPaint(PaintEventArgs e)
     {
         base.OnPaint(e);
@@ -31,14 +71,23 @@ public class GameCanva : Drawable
 
         for (int i = 0; i < _gameState.Players.Length; i++)
         {
-            if (_gameState.Players[i].State == Models.Actions.StateAction.Connected)
+            var player = _gameState.Players[i];
+
+            if (player.State == Models.Actions.StateAction.Connected)
             {
-                float col = _gameState.Players[i].Column * cellWidth;
-                float row = _gameState.Players[i].Row * cellHeight;
+                float col = player.Column * cellWidth;
+                float row = player.Row * cellHeight;
 
-                row = Height - row - cellHeight;
+                float drawRow = Height - row - cellHeight;
 
-                g.DrawImage(_player, col, row, cellWidth, cellHeight);
+                g.DrawImage(_player, col, drawRow, cellWidth, cellHeight);
+
+                // score no topo da célula (independente do sprite)
+                float textX = col + (cellWidth / 2);
+                float textY =  ConfigurationSingleton.OffSetDrawScore;
+
+
+                g.DrawText(_font, _brush, textX, textY, player.Score.ToString());
             }
         }
 

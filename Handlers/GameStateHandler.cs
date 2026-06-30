@@ -4,7 +4,6 @@ using Freeway.Models;
 using Freeway.Models.Actions;
 using Freeway.Models.Network;
 using Freeway.Singleton;
-using Gtk;
 
 namespace Freeway.Handlers;
 

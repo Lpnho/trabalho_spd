@@ -73,9 +73,9 @@ public class GrpcNetworkClient :
                 OnReceive?.Invoke(null, packet.ToApplicationPacket());
             }
         }
-        catch (Exception ex)
+        catch (Exception)
         {
-            Console.WriteLine(ex);
+            //Console.WriteLine(ex);
         }
         finally
         {
@@ -91,9 +91,9 @@ public class GrpcNetworkClient :
                 await client.WriteAsync(data.ToGrpcPacket()).ConfigureAwait(false);
             }
         }
-        catch (Exception ex)
+        catch (Exception)
         {
-            Console.WriteLine(ex);
+            //Console.WriteLine(ex);
         }
     }
     public void Dispose()

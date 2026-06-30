@@ -106,9 +106,9 @@ public class MqttNetworkClient : INetworkClient
                 OnReceive?.Invoke(null, Packet.Create(header));
             }
         }
-        catch (Exception ex)
+        catch (Exception)
         {
-            Console.WriteLine(ex);
+            //Console.WriteLine(ex);
         }
         finally
         {
@@ -125,9 +125,9 @@ public class MqttNetworkClient : INetworkClient
                     data.ToBytes()).ConfigureAwait(false);
             }
         }
-        catch (Exception ex)
+        catch (Exception)
         {
-            Console.WriteLine(ex);
+            //Console.WriteLine(ex);
         }
     }
 

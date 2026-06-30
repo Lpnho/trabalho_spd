@@ -15,7 +15,7 @@
 	<ItemGroup>
 		<PackageReference Include="Eto.Forms" Version="2.11.0" />
 		<PackageReference Include="Eto.Platform.Gtk" Version="2.11.0" />
-
+		<PackageReference Include="GtkSharp" Version="3.24.24.95" />
 		<PackageReference Include="Google.Protobuf" Version="3.33.0" />
 
 		<PackageReference Include="Grpc.Core" Version="2.46.6" />
